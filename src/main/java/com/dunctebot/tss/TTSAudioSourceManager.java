@@ -3,6 +3,7 @@ package com.dunctebot.tss;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
+import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.Units;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpConfigurable;
@@ -11,15 +12,22 @@ import com.sedmelluq.discord.lavaplayer.track.AudioItem;
 import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
+import org.apache.http.Header;
+import org.apache.http.HeaderElement;
+import org.apache.http.NameValuePair;
+import org.apache.http.ParseException;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.springframework.lang.Nullable;
+import org.springframework.util.StringUtils;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -31,6 +39,25 @@ public class TTSAudioSourceManager implements AudioSourceManager, HttpConfigurab
 
     public TTSAudioSourceManager(JWTGenerator generator) {
         this.generator = generator;
+
+        this.configureBuilder(
+                (config) -> config.setDefaultHeaders(List.of(new Header() {
+                    @Override
+                    public HeaderElement[] getElements() throws ParseException {
+                        return new HeaderElement[0];
+                    }
+
+                    @Override
+                    public String getName() {
+                        return "Authorization";
+                    }
+
+                    @Override
+                    public String getValue() {
+                        return "Bearer " + generator.getJWT();
+                    }
+                }))
+        );
     }
 
     @Override
@@ -50,11 +77,17 @@ public class TTSAudioSourceManager implements AudioSourceManager, HttpConfigurab
             return null;
         }
 
+        final String audio = this.getAudio(config);
+
+        if (audio == null) {
+            return AudioReference.NO_TRACK;
+        }
+
         return new TTSAudioTrack(new AudioTrackInfo(
-                "", // input text
+                config.getSynthesisInput().getEffectiveText(), // input text
                 "TTS", // author
                 Units.CONTENT_LENGTH_UNKNOWN, // length
-                "", // base64 encoded audio
+                audio, // base64 encoded audio
                 false,
                 config.getUri().toString()
         ));
@@ -62,7 +95,7 @@ public class TTSAudioSourceManager implements AudioSourceManager, HttpConfigurab
 
     @Override
     public boolean isTrackEncodable(AudioTrack track) {
-        return false;
+        return true;
     }
 
     @Override
@@ -91,25 +124,63 @@ public class TTSAudioSourceManager implements AudioSourceManager, HttpConfigurab
     }
 
     @Nullable
+    private String getAudio(GoogleTTSConfig config) {
+        return null;
+    }
+
+    @Nullable
     private GoogleTTSConfig parseURI(String uri) {
         if (uri == null || !uri.startsWith("tts://")) {
             return null;
         }
 
         try {
-            final URI parsed = new URI(uri);
-            final String query = parsed.getQuery();
+            final URIBuilder parsed = new URIBuilder(uri);
+            final URI builtUri = parsed.build();
+            final List<NameValuePair> queryParams = parsed.getQueryParams();
+            final GoogleTTSConfig config = new GoogleTTSConfig().setUri(builtUri);
 
-            if (query != null) {
-                if (query.contains("config=")) {
+            if (!queryParams.isEmpty()) {
+                if (queryParams.stream().anyMatch((p) -> "config".equals(p.getName()))) {
+                    final NameValuePair jsonConfig = queryParams.stream()
+                            .filter(
+                                    (p) -> "config".equals(p.getName())
+                            )
+                            .findFirst()
+                            .orElse(null);
+
+                    assert jsonConfig != null; // will never be null :)
+                    final JsonBrowser parse = JsonBrowser.parse(jsonConfig.getValue());
+
                     // take config
                     // make config from param and return
-                    return new GoogleTTSConfig();
+                    return parse.as(GoogleTTSConfig.class).setUri(builtUri);
                 }
+
                 // parse predefined query params
+                if (queryParams.stream().anyMatch((p) -> "language".equals(p.getName()))) {
+                    queryParams.stream()
+                            .filter(
+                                    (p) -> "language".equals(p.getName())
+                            )
+                            .findFirst()
+                            .ifPresent(
+                                    (language) -> config.getVoiceSelectionParams()
+                                            .setLanguageCode(language.getValue())
+                            );
+
+                }
+
             }
 
-        } catch (URISyntaxException e) {
+            if (StringUtils.isEmpty(parsed.getPath())) {
+                return null;
+            }
+
+            config.getSynthesisInput().setText(parsed.getPath());
+
+            return config;
+        } catch (URISyntaxException | IOException e) {
             e.printStackTrace();
         }
 
