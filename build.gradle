@@ -46,10 +46,10 @@ publishing {
 }
 
 githubRelease {
-    token System.getenv("GITHUB_TOKEN")
+    token System.getenv("GITHUB_TOKEN") ?: ""
     owner "DuncteBot"
     repo "tts-plugin"
-    targetCommitish System.getenv("RELEASE_TARGET")
+    targetCommitish System.getenv("RELEASE_TARGET") ?: ""
     releaseAssets shadowJar.outputs.files
     tagName version
     releaseName version
