@@ -14,7 +14,6 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.springframework.lang.Nullable;
-import org.springframework.stereotype.Service;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -24,22 +23,30 @@ import java.net.URISyntaxException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-@Service
 public class TTSAudioSourceManager implements AudioSourceManager, HttpConfigurable {
     public static final String GOOGLE_API_URL = "https://texttospeech.googleapis.com/";
 
     private final HttpInterfaceManager httpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager();
+    private final JWTGenerator generator;
+
+    public TTSAudioSourceManager(JWTGenerator generator) {
+        this.generator = generator;
+    }
 
     @Override
     public String getSourceName() {
-        return "tts";
+        return "gcloud-tts";
     }
 
     @Override
     public AudioItem loadItem(AudioPlayerManager manager, AudioReference reference) {
-        final URI uri = this.parseURI(reference.identifier);
+        if (this.generator == null) {
+            return null;
+        }
 
-        if (uri == null) {
+        final GoogleTTSConfig config = this.parseURI(reference.identifier);
+
+        if (config == null) {
             return null;
         }
 
@@ -49,7 +56,7 @@ public class TTSAudioSourceManager implements AudioSourceManager, HttpConfigurab
                 Units.CONTENT_LENGTH_UNKNOWN, // length
                 "", // base64 encoded audio
                 false,
-                uri.toString()
+                config.getUri().toString()
         ));
     }
 
@@ -59,12 +66,12 @@ public class TTSAudioSourceManager implements AudioSourceManager, HttpConfigurab
     }
 
     @Override
-    public void encodeTrack(AudioTrack track, DataOutput output) throws IOException {
+    public void encodeTrack(AudioTrack track, DataOutput output) {
         // nothing to encode
     }
 
     @Override
-    public AudioTrack decodeTrack(AudioTrackInfo trackInfo, DataInput input) throws IOException {
+    public AudioTrack decodeTrack(AudioTrackInfo trackInfo, DataInput input) {
         return new TTSAudioTrack(trackInfo);
     }
 
@@ -84,7 +91,7 @@ public class TTSAudioSourceManager implements AudioSourceManager, HttpConfigurab
     }
 
     @Nullable
-    private URI parseURI(String uri) {
+    private GoogleTTSConfig parseURI(String uri) {
         if (uri == null || !uri.startsWith("tts://")) {
             return null;
         }
@@ -96,7 +103,10 @@ public class TTSAudioSourceManager implements AudioSourceManager, HttpConfigurab
             if (query != null) {
                 if (query.contains("config=")) {
                     // take config
+                    // make config from param and return
+                    return new GoogleTTSConfig();
                 }
+                // parse predefined query params
             }
 
         } catch (URISyntaxException e) {
