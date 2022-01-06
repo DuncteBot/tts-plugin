@@ -3,6 +3,7 @@ plugins {
     id "application"
     id "maven-publish"
     id "com.github.johnrengelman.shadow" version "7.1.2"
+    id "com.github.breadmoirai.github-release" version "2.2.12"
 }
 
 group "com.dunctebot"
@@ -42,4 +43,17 @@ publishing {
             }
         }
     }
+}
+
+githubRelease {
+    token System.getenv("GITHUB_TOKEN")
+    owner "DuncteBot"
+    repo "tts-plugin"
+    targetCommitish System.getenv("RELEASE_TARGET")
+    releaseAssets shadowJar.outputs.files
+    tagName version
+    releaseName version
+    overwrite false
+    prerelease false
+    body changelog()
 }
