@@ -16,13 +16,15 @@ lavalink:
 
 # Configuration
 The plugin exposes these configuration options
-<br><b>NOTE:</b> this plugins block is a root level object, don't place it where you import the plugin
+<br><b>NOTE:</b> This plugins block is a root level object, don't place it where you import the plugin
+<br><b>NOTE:</b> The double quotes are required for the private key
+<br><b>NOTE:</b> Having a `GOOGLE_APPLICATION_CREDENTIALS` env var set with the path to your credentials file overrides these settings
 ```yml
 plugins:
   dunctebot:
     tts:
-      clientEmail: '' # The client_email from your service account json
-      privateKey: '' # The private_key from your service account json
+      clientEmail: "" # The client_email from your service account json
+      privateKey: "" # The private_key from your service account json
 ```
 
 # Usage
