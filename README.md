@@ -33,6 +33,7 @@ Simple usage will suit most users as it only exposes the bare basics of the conf
 
 The format for requesting a tts message is as following `tts://Thing I want to say?language=de-DE` where the language query parameter is optional.
 The language will default to `en-US`.
+Make sure that the scheme is exactly `tts://` with two slashes because the text has to be in the authority section of the URI.
 
 Below is a javascript example, javascript was chosen here because it is easy to understand for most people that want to interpret it.
 ```js

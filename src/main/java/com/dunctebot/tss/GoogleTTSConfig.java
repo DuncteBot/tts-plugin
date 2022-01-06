@@ -3,7 +3,6 @@ package com.dunctebot.tss;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.net.URI;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -11,8 +10,8 @@ public class GoogleTTSConfig {
     // uri that this config originated from
     private URI uri;
 
-    private SynthesisInput synthesisInput = new SynthesisInput();
-    private VoiceSelectionParams voiceSelectionParams = new VoiceSelectionParams();
+    private SynthesisInput input = new SynthesisInput();
+    private VoiceSelectionParams voice = new VoiceSelectionParams();
     private AudioConfig audioConfig = new AudioConfig();
 
     public URI getUri() {
@@ -24,20 +23,20 @@ public class GoogleTTSConfig {
         return this;
     }
 
-    public SynthesisInput getSynthesisInput() {
-        return synthesisInput;
+    public SynthesisInput getInput() {
+        return input;
     }
 
-    public void setSynthesisInput(SynthesisInput synthesisInput) {
-        this.synthesisInput = synthesisInput;
+    public void setInput(SynthesisInput input) {
+        this.input = input;
     }
 
-    public VoiceSelectionParams getVoiceSelectionParams() {
-        return voiceSelectionParams;
+    public VoiceSelectionParams getVoice() {
+        return voice;
     }
 
-    public void setVoiceSelectionParams(VoiceSelectionParams voiceSelectionParams) {
-        this.voiceSelectionParams = voiceSelectionParams;
+    public void setVoice(VoiceSelectionParams voice) {
+        this.voice = voice;
     }
 
     public AudioConfig getAudioConfig() {
@@ -51,8 +50,8 @@ public class GoogleTTSConfig {
     public JSONObject toJson() {
         final JSONObject jsonBrowser = new JSONObject();
 
-        jsonBrowser.put("input", this.synthesisInput.toJson());
-        jsonBrowser.put("voice", this.voiceSelectionParams.toJson());
+        jsonBrowser.put("input", this.input.toJson());
+        jsonBrowser.put("voice", this.voice.toJson());
         jsonBrowser.put("audioConfig", this.audioConfig.toJson());
 
         return jsonBrowser;
@@ -147,6 +146,7 @@ public class GoogleTTSConfig {
         }
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class AudioConfig {
         private Double speakingRate = null;
         private Double pitch = null;
