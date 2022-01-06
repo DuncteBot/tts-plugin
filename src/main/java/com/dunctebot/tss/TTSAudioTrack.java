@@ -1,11 +1,14 @@
 package com.dunctebot.tss;
 
+import com.sedmelluq.discord.lavaplayer.container.ogg.OggAudioTrack;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.tools.io.NonSeekableInputStream;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 import com.sedmelluq.discord.lavaplayer.track.DelegatedAudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.playback.LocalAudioTrackExecutor;
 
+import java.io.ByteArrayInputStream;
 import java.util.Base64;
 
 public class TTSAudioTrack extends DelegatedAudioTrack {
@@ -22,6 +25,10 @@ public class TTSAudioTrack extends DelegatedAudioTrack {
         // use NonSeekableInputStream + ByteBufferInputStream/ByteArrayInputStream?
         // make a custom impl of SeekableInputStream with ByteArrayInputStream?
         // audio track: OggAudioTrack
+
+        try (NonSeekableInputStream stream = new NonSeekableInputStream(new ByteArrayInputStream(audio))) {
+            processDelegate(new OggAudioTrack(this.trackInfo, stream), executor);
+        }
     }
 
     @Override
