@@ -104,7 +104,7 @@ public class GoogleTTSConfig {
     public static class VoiceSelectionParams {
         private String languageCode = "en-GB";
         private String name = null;
-        private String ssmlGender = null;
+        private String ssmlGender = "FEMALE";
 
         public String getLanguageCode() {
             return languageCode;

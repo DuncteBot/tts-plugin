@@ -12,7 +12,7 @@ public class TTSPlugin implements AudioPlayerManagerConfiguration {
     private static final Logger LOG = LoggerFactory.getLogger(TTSPlugin.class);
     private JWTGenerator generator;
 
-    public TTSPlugin(LavalinkTTSConfig config) {
+    public TTSPlugin(LavalinkTTSConfig config) throws Exception {
         LOG.info("Loading GCLOUD TTS plugin");
 
         if (StringUtils.isEmpty(config.getClientEmail())) {
@@ -31,6 +31,7 @@ public class TTSPlugin implements AudioPlayerManagerConfiguration {
 
     @Override
     public AudioPlayerManager configure(AudioPlayerManager manager) {
+        LOG.info("Registring source manager");
         manager.registerSourceManager(new TTSAudioSourceManager(this.generator));
 
         return manager;

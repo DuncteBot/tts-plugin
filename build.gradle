@@ -22,6 +22,7 @@ repositories {
 
 dependencies {
     implementation "io.jsonwebtoken:jjwt:0.9.1"
+    implementation "javax.xml.bind:jaxb-api:2.3.1"
     compileOnly 'dev.arbjerg.lavalink:plugin-api:0.9.0'
     runtimeOnly "com.github.freyacodes.lavalink:Lavalink-Server:dev-SNAPSHOT"
 }

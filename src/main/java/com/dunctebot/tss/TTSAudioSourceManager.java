@@ -86,10 +86,13 @@ public class TTSAudioSourceManager implements AudioSourceManager, HttpConfigurab
         }
 
         final String audio = this.getAudio(config);
+//        final String audio = "";
 
         if (audio == null) {
             return AudioReference.NO_TRACK;
         }
+
+        System.out.println("AUDIO HERE\n\n" + audio + "\n\nAUDIO HERE");
 
         return new TTSAudioTrack(new AudioTrackInfo(
                 config.getSynthesisInput().getEffectiveText(), // input text
@@ -98,7 +101,7 @@ public class TTSAudioSourceManager implements AudioSourceManager, HttpConfigurab
                 audio, // base64 encoded audio
                 false,
                 config.getUri().toString()
-        ));
+        ), this);
     }
 
     @Override
@@ -113,7 +116,7 @@ public class TTSAudioSourceManager implements AudioSourceManager, HttpConfigurab
 
     @Override
     public AudioTrack decodeTrack(AudioTrackInfo trackInfo, DataInput input) {
-        return new TTSAudioTrack(trackInfo);
+        return new TTSAudioTrack(trackInfo, this);
     }
 
     @Override
@@ -143,6 +146,7 @@ public class TTSAudioSourceManager implements AudioSourceManager, HttpConfigurab
 
         try (final CloseableHttpResponse response = httpInterfaceManager.getInterface().execute(req)) {
             if (response.getStatusLine().getStatusCode() != 200) {
+                System.out.println("wrong status code?");
                 return null;
             }
 
@@ -157,6 +161,8 @@ public class TTSAudioSourceManager implements AudioSourceManager, HttpConfigurab
 
     @Nullable
     private GoogleTTSConfig parseURI(String uri) {
+        System.out.println("URI: " + uri);
+
         if (uri == null || !uri.startsWith("tts://")) {
             return null;
         }
@@ -199,6 +205,12 @@ public class TTSAudioSourceManager implements AudioSourceManager, HttpConfigurab
                 }
 
             }
+
+            System.out.println("Path: " + parsed.getPath());
+            System.out.println("Host: " + parsed.getHost());
+            System.out.println("Fragment: " + parsed.getFragment());
+            System.out.println("userInfo: " + parsed.getUserInfo());
+            System.out.println("Scheme: " + parsed.getScheme());
 
             if (StringUtils.isEmpty(parsed.getPath())) {
                 return null;
