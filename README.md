@@ -1,3 +1,8 @@
+# Google cloud text to speech plugin
+This is a lavalink plugin for the text to speech api that google provides.
+
+**NOTE:** The Google cloud tts api is a paid api, if you are looking for a free version have a look at this plugin: https://github.com/DuncteBot/skybot-lavalink-plugin
+
 # Installation
 To install this plugin either download the latest release and place it in your `plugins` folder or add the following to your `application.yml`
 ```yml
