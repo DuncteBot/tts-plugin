@@ -3,6 +3,8 @@ package com.dunctebot.tss;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.tools.ExceptionTools;
+import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
+import com.sedmelluq.discord.lavaplayer.tools.FriendlyException.Severity;
 import com.sedmelluq.discord.lavaplayer.tools.JsonBrowser;
 import com.sedmelluq.discord.lavaplayer.tools.Units;
 import com.sedmelluq.discord.lavaplayer.tools.io.HttpClientTools;
@@ -12,12 +14,17 @@ import com.sedmelluq.discord.lavaplayer.track.AudioItem;
 import com.sedmelluq.discord.lavaplayer.track.AudioReference;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HeaderElement;
 import org.apache.http.NameValuePair;
 import org.apache.http.ParseException;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.springframework.lang.Nullable;
 import org.springframework.util.StringUtils;
@@ -27,6 +34,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -125,7 +133,26 @@ public class TTSAudioSourceManager implements AudioSourceManager, HttpConfigurab
 
     @Nullable
     private String getAudio(GoogleTTSConfig config) {
-        return null;
+        HttpPost req = new HttpPost(GOOGLE_API_URL + "v1/text:synthesize");
+
+        // req.addHeader("", "");
+        // req.addHeader("Content-Type", "application/json");
+
+        req.setEntity(new StringEntity(config.toJson().toString(), ContentType.APPLICATION_JSON));
+
+
+        try (final CloseableHttpResponse response = httpInterfaceManager.getInterface().execute(req)) {
+            if (response.getStatusLine().getStatusCode() != 200) {
+                return null;
+            }
+
+            final String content = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
+            final JsonBrowser json = JsonBrowser.parse(content);
+
+            return json.get("audioContent").text();
+        } catch (IOException e) {
+            throw new FriendlyException("Could not generate audio", Severity.COMMON, e);
+        }
     }
 
     @Nullable

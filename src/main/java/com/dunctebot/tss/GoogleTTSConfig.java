@@ -48,7 +48,7 @@ public class GoogleTTSConfig {
         this.audioConfig = audioConfig;
     }
 
-    public JSONObject toJson() throws IOException {
+    public JSONObject toJson() {
         final JSONObject jsonBrowser = new JSONObject();
 
         jsonBrowser.put("input", this.synthesisInput.toJson());
